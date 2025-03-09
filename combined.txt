@@ -1,0 +1,424 @@
+# Project Directory Structure
+./
+    popup.js
+    combined.txt
+    background.js
+    popup.html
+    cat.py
+    .gitignore
+    manifest.json
+    content.js
+    images/
+        icon16.png
+        icon48.png
+        icon128.png
+    styles/
+        popup.css
+
+# End of Directory Structure
+
+# Start of styles/popup.css
+
+# End of styles/popup.css
+
+# Start of background.js
+// Handle OAuth token management
+let accessToken = null;
+
+// Listen for messages from popup or content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "stashFile") {
+    handleStashFile(request.fileUrl, request.eventDateTime, request.eventName)
+      .then(result => {
+        console.log('Calendar event created successfully:', result);
+        sendResponse({ success: true, message: "Event created!", details: result });
+      })
+      .catch(error => {
+        console.error('Error creating calendar event:', error);
+        sendResponse({ success: false, message: error.message });
+      });
+    return true; // Will respond asynchronously
+  }
+});
+
+async function handleStashFile(fileUrl, eventDateTime, eventName) {
+  try {
+    // Ensure we have a valid token
+    console.log('Getting auth token...');
+    accessToken = await getAuthToken();
+    console.log('Token received');
+
+    // If it's a Google Drive file, get its details
+    let finalEventName = eventName;
+    if (fileUrl.match(/https:\/\/(docs|sheets|slides)\.google\.com/)) {
+      try {
+        console.log('Fetching Google Drive file details...');
+        const fileDetails = await getFileDetails(fileUrl, accessToken);
+        finalEventName = `Review: ${fileDetails.name}`;
+        console.log('File details:', fileDetails);
+      } catch (error) {
+        console.warn('Could not fetch Drive file details, using provided name:', error);
+      }
+    }
+    
+    // Create calendar event
+    console.log('Creating calendar event...');
+    const event = await createCalendarEvent({
+      summary: finalEventName,
+      description: `Review webpage: ${fileUrl}`,
+      startDateTime: eventDateTime,
+      duration: 30 // minutes
+    });
+    
+    return event;
+  } catch (error) {
+    console.error('Error in handleStashFile:', error);
+    throw error;
+  }
+}
+
+async function getAuthToken() {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive: true }, (token) => {
+      if (chrome.runtime.lastError) {
+        console.error('Auth token error:', chrome.runtime.lastError);
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(token);
+      }
+    });
+  });
+}
+
+async function getFileDetails(fileUrl, token) {
+  try {
+    // Extract file ID from URL
+    const fileId = extractFileId(fileUrl);
+    console.log('Extracted file ID:', fileId);
+    
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Drive API error:', errorData);
+      throw new Error('Failed to fetch file details: ' + errorData.error?.message || response.statusText);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Error in getFileDetails:', error);
+    throw error;
+  }
+}
+
+function extractFileId(url) {
+  const match = url.match(/[-\w]{25,}/);
+  if (!match) {
+    throw new Error('Could not extract file ID from URL');
+  }
+  return match[0];
+}
+
+async function createCalendarEvent({ summary, description, startDateTime, duration }) {
+  try {
+    const endDateTime = new Date(new Date(startDateTime).getTime() + duration * 60000).toISOString();
+    
+    const event = {
+      summary,
+      description,
+      start: {
+        dateTime: startDateTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      end: {
+        dateTime: endDateTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    };
+    
+    console.log('Creating calendar event with data:', event);
+    
+    const response = await fetch(
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Calendar API error:', errorData);
+      throw new Error('Failed to create calendar event: ' + errorData.error?.message || response.statusText);
+    }
+    
+    const result = await response.json();
+    console.log('Calendar event created:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in createCalendarEvent:', error);
+    throw error;
+  }
+}
+# End of background.js
+
+# Start of content.js
+
+# End of content.js
+
+# Start of manifest.json
+{
+    "manifest_version": 3,
+    "name": "Stash It",
+    "version": "1.0",
+    "description": "Create calendar events for any webpage for easy access later",
+    "permissions": [
+      "identity",
+      "tabs",
+      "activeTab",
+      "storage"
+    ],
+    "host_permissions": [
+      "https://*/*",
+      "http://*/*",
+      "https://docs.google.com/*",
+      "https://drive.google.com/*",
+      "https://sheets.google.com/*",
+      "https://slides.google.com/*",
+      "https://www.googleapis.com/*",
+      "https://accounts.google.com/*"
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+      }
+    },
+    "icons": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    },
+    "oauth2": {
+      "client_id": "1008378664594-mo8i2f9vlj1p8v4e4og0dd9i3gcj80tl.apps.googleusercontent.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/drive.readonly"
+      ]
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [{
+      "matches": [
+        "https://docs.google.com/*",
+        "https://sheets.google.com/*",
+        "https://slides.google.com/*"
+      ],
+      "js": ["content.js"]
+    }]
+  }
+# End of manifest.json
+
+# Start of popup.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stash It</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+    }
+    input[type="date"],
+    input[type="time"],
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    .button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .button:hover {
+      background-color: #3367d6;
+    }
+    .button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #e6f4ea;
+      color: #137333;
+    }
+    .error {
+      background-color: #fce8e6;
+      color: #c5221f;
+    }
+    .default-toggle {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-group">
+    <label for="eventName">Event Name:</label>
+    <input type="text" id="eventName" placeholder="Review: Page Title">
+  </div>
+
+  <div class="form-group">
+    <label for="eventDate">Date:</label>
+    <input type="date" id="eventDate">
+  </div>
+  
+  <div class="form-group">
+    <label for="eventTime">Time:</label>
+    <input type="time" id="eventTime">
+  </div>
+
+  <button id="stashButton" class="button">Stash It</button>
+  
+  <div class="default-toggle">
+    <label>
+      <input type="checkbox" id="saveAsDefault"> Save time as default
+    </label>
+  </div>
+
+  <div id="status" class="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
+# End of popup.html
+
+# Start of popup.js
+document.addEventListener('DOMContentLoaded', function() {
+    const stashButton = document.getElementById('stashButton');
+    const statusDiv = document.getElementById('status');
+    const dateInput = document.getElementById('eventDate');
+    const timeInput = document.getElementById('eventTime');
+    const eventNameInput = document.getElementById('eventName');
+    const saveDefaultCheck = document.getElementById('saveAsDefault');
+  
+    // Set tomorrow's date
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setHours(0, 0, 0, 0); // Reset time to midnight
+    tomorrow.setDate(today.getDate() + 1); // Add one day
+    
+    // Format date as YYYY-MM-DD
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    // Load saved defaults and set up page title
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      const tab = tabs[0];
+      const defaultName = `Review: ${tab.title}`;
+      eventNameInput.value = defaultName;
+  
+      chrome.storage.sync.get({
+        defaultTime: '08:00'
+      }, function(items) {
+        dateInput.value = tomorrowStr;
+        timeInput.value = items.defaultTime;
+      });
+    });
+  
+    stashButton.addEventListener('click', async () => {
+      try {
+        // Get the current tab
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  
+        // Combine date and time inputs
+        const dateTimeStr = `${dateInput.value}T${timeInput.value}:00`;
+        const eventDateTime = new Date(dateTimeStr);
+  
+        if (isNaN(eventDateTime.getTime())) {
+          throw new Error('Please select a valid date and time');
+        }
+  
+        // Save as default if checked
+        if (saveDefaultCheck.checked) {
+          chrome.storage.sync.set({
+            defaultTime: timeInput.value
+          });
+        }
+  
+        // Show loading state
+        stashButton.disabled = true;
+        stashButton.textContent = 'Creating event...';
+        
+        // Send message to background script
+        const response = await chrome.runtime.sendMessage({
+          action: 'stashFile',
+          fileUrl: tab.url,
+          eventDateTime: eventDateTime.toISOString(),
+          eventName: eventNameInput.value
+        });
+  
+        // Show success message
+        statusDiv.textContent = 'Calendar event created!';
+        statusDiv.className = 'status success';
+        statusDiv.style.display = 'block';
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          stashButton.disabled = false;
+          stashButton.textContent = 'Stash It';
+          statusDiv.style.display = 'none';
+        }, 2000);
+  
+      } catch (error) {
+        // Show error message
+        statusDiv.textContent = error.message;
+        statusDiv.className = 'status error';
+        statusDiv.style.display = 'block';
+        
+        // Reset button
+        stashButton.disabled = false;
+        stashButton.textContent = 'Stash It';
+      }
+    });
+  });
+# End of popup.js
+

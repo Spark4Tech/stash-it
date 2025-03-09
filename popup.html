@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stash It</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Stash It</h1>
+    
+    <div class="form-group">
+      <label for="eventName">Event Name</label>
+      <input type="text" id="eventName" placeholder="Review: Page Title">
+    </div>
+
+    <div class="form-group">
+      <label for="eventDate">Date</label>
+      <input type="date" id="eventDate">
+    </div>
+    
+    <div class="form-group">
+      <label for="eventTime">Time</label>
+      <input type="time" id="eventTime">
+    </div>
+
+    <div class="button-container">
+      <button id="stashButton" class="button">
+        <span id="spinner" class="spinner" style="display: none;"></span>
+        <span id="buttonText">Stash It</span>
+      </button>
+      <button id="openButton" class="open-button">Open Event</button>
+    </div>
+    
+    <div class="default-toggle">
+      <label>
+        <input type="checkbox" id="saveAsDefault"> Save time as default
+      </label>
+    </div>
+
+    <div id="status" class="status"></div>
+    
+    <div class="footer">
+      Spark4 &copy; 2025
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

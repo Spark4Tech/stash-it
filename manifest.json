@@ -1,0 +1,55 @@
+{
+    "manifest_version": 3,
+    "name": "Stash It",
+    "version": "1.0",
+    "description": "Create calendar events for any webpage for easy access later",
+    "permissions": [
+      "identity",
+      "tabs",
+      "activeTab",
+      "storage",
+      "notifications"
+    ],
+    "host_permissions": [
+      "https://*/*",
+      "http://*/*",
+      "https://docs.google.com/*",
+      "https://drive.google.com/*",
+      "https://sheets.google.com/*",
+      "https://slides.google.com/*",
+      "https://www.googleapis.com/*",
+      "https://accounts.google.com/*"
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/icon16.png",
+        "48": "images/icon48.png",
+        "128": "images/icon128.png"
+      }
+    },
+    "icons": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    },
+    "oauth2": {
+      "client_id": "1008378664594-mo8i2f9vlj1p8v4e4og0dd9i3gcj80tl.apps.googleusercontent.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/drive.readonly"
+      ]
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [{
+      "matches": [
+        "https://docs.google.com/*",
+        "https://sheets.google.com/*",
+        "https://slides.google.com/*"
+      ],
+      "js": ["content.js"]
+    }]
+  }
