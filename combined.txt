@@ -18,7 +18,193 @@
 # End of Directory Structure
 
 # Start of styles/popup.css
+/* Add to your popup.html <style> section */
 
+/* Updated base styles */
+body {
+    width: 320px;
+    padding: 16px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #202124;
+    margin: 0;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  /* Card-like container */
+  .container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  }
+  
+  /* Title styling */
+  .title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  /* Form group improvements */
+  .form-group {
+    margin-bottom: 14px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #5f6368;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  input[type="date"],
+  input[type="time"],
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: #4285f4;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+  
+  /* Button improvements */
+  .button {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    transition: background-color 0.2s;
+  }
+  
+  .button:hover {
+    background-color: #3367d6;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  .button:active {
+    background-color: #2850a7;
+  }
+  
+  .button:disabled {
+    background-color: #c2c2c2;
+    cursor: not-allowed;
+  }
+  
+  .open-button {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #34a853;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    margin-top: 0;
+    transition: background-color 0.2s;
+  }
+  
+  .open-button:hover {
+    background-color: #2e7d32;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  .open-button:active {
+    background-color: #1e5e20;
+  }
+  
+  /* Button container for multiple buttons */
+  .button-container {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .button-container .button,
+  .button-container .open-button {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  
+  /* Status message improvements */
+  .status {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    display: none;
+    font-size: 13px;
+    text-align: center;
+  }
+  
+  .success {
+    background-color: #e6f4ea;
+    color: #137333;
+    border-left: 4px solid #34a853;
+  }
+  
+  .error {
+    background-color: #fce8e6;
+    color: #c5221f;
+    border-left: 4px solid #ea4335;
+  }
+  
+  /* Toggle improvement */
+  .default-toggle {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #5f6368;
+    display: flex;
+    align-items: center;
+  }
+  
+  .default-toggle input[type="checkbox"] {
+    margin-right: 6px;
+  }
+  
+  /* Footer with branding */
+  .footer {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: #5f6368;
+  }
+  
+  /* Loading indicator */
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 # End of styles/popup.css
 
 # Start of background.js
@@ -69,6 +255,16 @@ async function handleStashFile(fileUrl, eventDateTime, eventName) {
       startDateTime: eventDateTime,
       duration: 30 // minutes
     });
+    
+    // Show notification
+    if (event && event.htmlLink) {
+      showNotification(
+        'Calendar Event Created',
+        `"${event.summary}" has been added to your calendar`,
+        event.id,
+        event.htmlLink
+      );
+    }
     
     return event;
   } catch (error) {
@@ -140,6 +336,13 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
       end: {
         dateTime: endDateTime,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      // Add reminders
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'popup', minutes: 10 }
+        ]
       }
     };
     
@@ -160,7 +363,21 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Calendar API error:', errorData);
-      throw new Error('Failed to create calendar event: ' + errorData.error?.message || response.statusText);
+      
+      // More user-friendly error messages
+      let errorMessage = 'Failed to create calendar event';
+      
+      if (errorData.error) {
+        if (errorData.error.code === 401) {
+          errorMessage = 'Authentication error. Please try again.';
+        } else if (errorData.error.code === 403) {
+          errorMessage = 'Permission denied. Please check your Google Calendar permissions.';
+        } else if (errorData.error.message) {
+          errorMessage = `Error: ${errorData.error.message}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
     
     const result = await response.json();
@@ -171,6 +388,47 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
     throw error;
   }
 }
+
+function showNotification(title, message, eventId, eventUrl) {
+  chrome.notifications.create(
+    eventId, // Use eventId as notification ID for reference
+    {
+      type: 'basic',
+      iconUrl: 'images/icon128.png',
+      title: title,
+      message: message,
+      buttons: [
+        { title: 'Open Event' }
+      ],
+      priority: 2
+    }
+  );
+  
+  // Store the URL for reference when notification is clicked
+  chrome.storage.local.set({ [eventId]: eventUrl });
+}
+
+// Handle notification clicks
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+  if (buttonIndex === 0) { // "Open Event" button
+    chrome.storage.local.get(notificationId, (result) => {
+      const eventUrl = result[notificationId];
+      if (eventUrl) {
+        chrome.tabs.create({ url: eventUrl });
+      }
+    });
+  }
+});
+
+// Handle direct notification clicks
+chrome.notifications.onClicked.addListener((notificationId) => {
+  chrome.storage.local.get(notificationId, (result) => {
+    const eventUrl = result[notificationId];
+    if (eventUrl) {
+      chrome.tabs.create({ url: eventUrl });
+    }
+  });
+});
 # End of background.js
 
 # Start of content.js
@@ -182,12 +440,13 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
     "manifest_version": 3,
     "name": "Stash It",
     "version": "1.0",
-    "description": "Create calendar events for any webpage for easy access later",
+    "description": "Stash the current tab on your calendar as an event for easy access later",
     "permissions": [
       "identity",
       "tabs",
       "activeTab",
-      "storage"
+      "storage",
+      "notifications"
     ],
     "host_permissions": [
       "https://*/*",
@@ -239,94 +498,48 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
 <html>
 <head>
   <title>Stash It</title>
-  <style>
-    body {
-      width: 300px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
-    }
-    .form-group {
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #555;
-      font-size: 14px;
-    }
-    input[type="date"],
-    input[type="time"],
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    .button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .button:hover {
-      background-color: #3367d6;
-    }
-    .button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 4px;
-      display: none;
-    }
-    .success {
-      background-color: #e6f4ea;
-      color: #137333;
-    }
-    .error {
-      background-color: #fce8e6;
-      color: #c5221f;
-    }
-    .default-toggle {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+  <link rel="stylesheet" href="styles/popup.css">
 </head>
 <body>
-  <div class="form-group">
-    <label for="eventName">Event Name:</label>
-    <input type="text" id="eventName" placeholder="Review: Page Title">
-  </div>
+  <div class="container">
+    <h1 class="title">Stash It</h1>
+    
+    <div class="form-group">
+      <label for="eventName">Event Name</label>
+      <input type="text" id="eventName" placeholder="Review: Page Title">
+    </div>
 
-  <div class="form-group">
-    <label for="eventDate">Date:</label>
-    <input type="date" id="eventDate">
+    <div class="form-group">
+      <label for="eventDate">Date</label>
+      <input type="date" id="eventDate">
+    </div>
+    
+    <div class="form-group">
+      <label for="eventTime">Time</label>
+      <input type="time" id="eventTime">
+    </div>
+
+    <div class="button-container">
+      <button id="stashButton" class="button">
+        <span id="spinner" class="spinner" style="display: none;"></span>
+        <span id="buttonText">Stash It</span>
+      </button>
+      <button id="openButton" class="open-button">Open Event</button>
+    </div>
+    
+    <div class="default-toggle">
+      <label>
+        <input type="checkbox" id="saveAsDefault"> Save time as default
+      </label>
+    </div>
+
+    <div id="status" class="status"></div>
+    
+    <div class="footer">
+      Spark4 &copy; 2025
+    </div>
   </div>
   
-  <div class="form-group">
-    <label for="eventTime">Time:</label>
-    <input type="time" id="eventTime">
-  </div>
-
-  <button id="stashButton" class="button">Stash It</button>
-  
-  <div class="default-toggle">
-    <label>
-      <input type="checkbox" id="saveAsDefault"> Save time as default
-    </label>
-  </div>
-
-  <div id="status" class="status"></div>
   <script src="popup.js"></script>
 </body>
 </html>
@@ -334,91 +547,118 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
 
 # Start of popup.js
 document.addEventListener('DOMContentLoaded', function() {
-    const stashButton = document.getElementById('stashButton');
-    const statusDiv = document.getElementById('status');
-    const dateInput = document.getElementById('eventDate');
-    const timeInput = document.getElementById('eventTime');
-    const eventNameInput = document.getElementById('eventName');
-    const saveDefaultCheck = document.getElementById('saveAsDefault');
+  const stashButton = document.getElementById('stashButton');
+  const openButton = document.getElementById('openButton');
+  const statusDiv = document.getElementById('status');
+  const dateInput = document.getElementById('eventDate');
+  const timeInput = document.getElementById('eventTime');
+  const eventNameInput = document.getElementById('eventName');
+  const saveDefaultCheck = document.getElementById('saveAsDefault');
   
-    // Set tomorrow's date
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setHours(0, 0, 0, 0); // Reset time to midnight
-    tomorrow.setDate(today.getDate() + 1); // Add one day
-    
-    // Format date as YYYY-MM-DD
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
-    // Load saved defaults and set up page title
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      const tab = tabs[0];
-      const defaultName = `Review: ${tab.title}`;
-      eventNameInput.value = defaultName;
+  // Variable to store the event URL
+  let createdEventUrl = '';
+
+  // Set tomorrow's date
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setHours(0, 0, 0, 0); // Reset time to midnight
+  tomorrow.setDate(today.getDate() + 1); // Add one day
   
-      chrome.storage.sync.get({
-        defaultTime: '08:00'
-      }, function(items) {
-        dateInput.value = tomorrowStr;
-        timeInput.value = items.defaultTime;
-      });
-    });
+  // Format date as YYYY-MM-DD
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
   
-    stashButton.addEventListener('click', async () => {
-      try {
-        // Get the current tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
-        // Combine date and time inputs
-        const dateTimeStr = `${dateInput.value}T${timeInput.value}:00`;
-        const eventDateTime = new Date(dateTimeStr);
-  
-        if (isNaN(eventDateTime.getTime())) {
-          throw new Error('Please select a valid date and time');
-        }
-  
-        // Save as default if checked
-        if (saveDefaultCheck.checked) {
-          chrome.storage.sync.set({
-            defaultTime: timeInput.value
-          });
-        }
-  
-        // Show loading state
-        stashButton.disabled = true;
-        stashButton.textContent = 'Creating event...';
-        
-        // Send message to background script
-        const response = await chrome.runtime.sendMessage({
-          action: 'stashFile',
-          fileUrl: tab.url,
-          eventDateTime: eventDateTime.toISOString(),
-          eventName: eventNameInput.value
-        });
-  
-        // Show success message
-        statusDiv.textContent = 'Calendar event created!';
-        statusDiv.className = 'status success';
-        statusDiv.style.display = 'block';
-        
-        // Reset button after 2 seconds
-        setTimeout(() => {
-          stashButton.disabled = false;
-          stashButton.textContent = 'Stash It';
-          statusDiv.style.display = 'none';
-        }, 2000);
-  
-      } catch (error) {
-        // Show error message
-        statusDiv.textContent = error.message;
-        statusDiv.className = 'status error';
-        statusDiv.style.display = 'block';
-        
-        // Reset button
-        stashButton.disabled = false;
-        stashButton.textContent = 'Stash It';
-      }
+  // Load saved defaults and set up page title
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    const tab = tabs[0];
+    const defaultName = `Review: ${tab.title}`;
+    eventNameInput.value = defaultName;
+
+    chrome.storage.sync.get({
+      defaultTime: '08:00'
+    }, function(items) {
+      dateInput.value = tomorrowStr;
+      timeInput.value = items.defaultTime;
+      
+      // Make sure button is enabled after populating values
+      stashButton.disabled = false;
     });
   });
+
+  stashButton.addEventListener('click', async () => {
+    try {
+      // Basic validation before proceeding
+      if (!dateInput.value || !timeInput.value || !eventNameInput.value.trim()) {
+        throw new Error('Please fill in all fields');
+      }
+      
+      // Get the current tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+      // Combine date and time inputs
+      const dateTimeStr = `${dateInput.value}T${timeInput.value}:00`;
+      const eventDateTime = new Date(dateTimeStr);
+
+      if (isNaN(eventDateTime.getTime())) {
+        throw new Error('Please select a valid date and time');
+      }
+
+      // Save as default if checked
+      if (saveDefaultCheck.checked) {
+        chrome.storage.sync.set({
+          defaultTime: timeInput.value
+        });
+      }
+
+      // Show loading state
+      stashButton.disabled = true;
+      stashButton.textContent = 'Creating event...';
+      
+      // Send message to background script
+      const response = await chrome.runtime.sendMessage({
+        action: 'stashFile',
+        fileUrl: tab.url,
+        eventDateTime: eventDateTime.toISOString(),
+        eventName: eventNameInput.value
+      });
+
+      // Show success message
+      statusDiv.textContent = 'Calendar event created!';
+      statusDiv.className = 'status success';
+      statusDiv.style.display = 'block';
+      
+      // Store the event URL and show the Open button
+      if (response.success && response.details && response.details.htmlLink) {
+        createdEventUrl = response.details.htmlLink;
+        openButton.style.display = 'block';
+      }
+      
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        stashButton.disabled = false;
+        stashButton.textContent = 'Stash It';
+      }, 2000);
+
+    } catch (error) {
+      // Show error message
+      statusDiv.textContent = error.message;
+      statusDiv.className = 'status error';
+      statusDiv.style.display = 'block';
+      
+      // Reset button
+      stashButton.disabled = false;
+      stashButton.textContent = 'Stash It';
+      
+      // Hide open button in case of error
+      openButton.style.display = 'none';
+    }
+  });
+  
+  // Add event listener for the open button
+  openButton.addEventListener('click', () => {
+    if (createdEventUrl) {
+      chrome.tabs.create({ url: createdEventUrl });
+    }
+  });
+});
 # End of popup.js
 

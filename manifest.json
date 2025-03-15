@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "Stash It",
-    "version": "1.0",
-    "description": "Create calendar events for any webpage for easy access later",
+    "version": "1.1.0",
+    "description": "Stash the current tab on your calendar as an event for easy access later",
     "permissions": [
       "identity",
       "tabs",
