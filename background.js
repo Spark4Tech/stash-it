@@ -23,20 +23,9 @@ async function handleStashFile(fileUrl, eventDateTime, eventName) {
     console.log('Getting auth token...');
     accessToken = await getAuthToken();
     console.log('Token received');
-
-    // If it's a Google Drive file, get its details
-    let finalEventName = eventName;
-    if (fileUrl.match(/https:\/\/(docs|sheets|slides)\.google\.com/)) {
-      try {
-        console.log('Fetching Google Drive file details...');
-        const fileDetails = await getFileDetails(fileUrl, accessToken);
-        finalEventName = `Review: ${fileDetails.name}`;
-        console.log('File details:', fileDetails);
-      } catch (error) {
-        console.warn('Could not fetch Drive file details, using provided name:', error);
-      }
-    }
     
+    let finalEventName = eventName;
+
     // Create calendar event
     console.log('Creating calendar event...');
     const event = await createCalendarEvent({
@@ -74,42 +63,6 @@ async function getAuthToken() {
       }
     });
   });
-}
-
-async function getFileDetails(fileUrl, token) {
-  try {
-    // Extract file ID from URL
-    const fileId = extractFileId(fileUrl);
-    console.log('Extracted file ID:', fileId);
-    
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Drive API error:', errorData);
-      throw new Error('Failed to fetch file details: ' + errorData.error?.message || response.statusText);
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Error in getFileDetails:', error);
-    throw error;
-  }
-}
-
-function extractFileId(url) {
-  const match = url.match(/[-\w]{25,}/);
-  if (!match) {
-    throw new Error('Could not extract file ID from URL');
-  }
-  return match[0];
 }
 
 async function createCalendarEvent({ summary, description, startDateTime, duration }) {

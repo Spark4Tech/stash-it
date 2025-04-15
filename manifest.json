@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Stash It",
-    "version": "1.1.0",
+    "version": "1.1.2",
     "description": "Stash the current tab on your calendar as an event for easy access later",
     "permissions": [
       "identity",
@@ -11,14 +11,7 @@
       "notifications"
     ],
     "host_permissions": [
-      "https://*/*",
-      "http://*/*",
-      "https://docs.google.com/*",
-      "https://drive.google.com/*",
-      "https://sheets.google.com/*",
-      "https://slides.google.com/*",
-      "https://www.googleapis.com/*",
-      "https://accounts.google.com/*"
+      "https://www.googleapis.com/*"
     ],
     "action": {
       "default_popup": "popup.html",
@@ -36,20 +29,10 @@
     "oauth2": {
       "client_id": "1008378664594-mo8i2f9vlj1p8v4e4og0dd9i3gcj80tl.apps.googleusercontent.com",
       "scopes": [
-        "https://www.googleapis.com/auth/calendar.events",
-        "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/drive.readonly"
+        "https://www.googleapis.com/auth/calendar.events"
       ]
     },
     "background": {
       "service_worker": "background.js"
-    },
-    "content_scripts": [{
-      "matches": [
-        "https://docs.google.com/*",
-        "https://sheets.google.com/*",
-        "https://slides.google.com/*"
-      ],
-      "js": ["content.js"]
-    }]
+    }
   }
