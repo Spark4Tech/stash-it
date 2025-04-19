@@ -1,21 +1,27 @@
-/* Base styles */
+/* Updated base styles */
 body {
   width: 320px;
-  padding: 16px;
   font-family: 'Segoe UI', Arial, sans-serif;
   color: #202124;
   margin: 0;
-  background-color: #0a1929; /* Dark blue background */
-  border-radius: 8px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 12px; /* Add this line to make the outer container have rounded corners */
+  overflow: hidden; /* Add this to ensure content respects the rounded corners */
 }
 
 /* Card-like container */
 .container {
-  position: relative; /* For positioning the close button */
+  position: relative;
   background-color: white;
-  border-radius: 12px; /* More pronounced rounded corners */
+  border-radius: 12px !important; /* Force rounded corners */
+  -webkit-border-radius: 12px; /* Vendor prefix for older Chrome */
   padding: 16px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  overflow: hidden;
+  /* Force hardware acceleration to fix potential rendering issues */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* Close button in the top right */
@@ -23,19 +29,20 @@ body {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background-color: #f1f1f1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
   color: #5f6368;
   border: none;
   transition: all 0.2s;
+  font-family: Arial, sans-serif;
 }
 
 .close-btn:hover {
@@ -191,6 +198,19 @@ input:focus {
   text-align: center;
   font-size: 12px;
   color: #ccc; /* Lighter text for dark background */
+}
+
+/* Footer link styling */
+.footer a {
+  color: #4285f4;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.footer a:hover {
+  color: #64a2ff;
+  text-decoration: underline;
 }
 
 /* Loading indicator */

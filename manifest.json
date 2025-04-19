@@ -27,7 +27,7 @@
       "128": "images/icon128.png"
     },
     "oauth2": {
-      "client_id": "1008378664594-mo8i2f9vlj1p8v4e4og0dd9i3gcj80tl.apps.googleusercontent.com",
+      "client_id": "1008378664594-5h46lufh4cn6ujln0fodjiimknjaqkdb.apps.googleusercontent.com",
       "scopes": [
         "https://www.googleapis.com/auth/calendar.events"
       ]

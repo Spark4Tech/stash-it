@@ -17,19 +17,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+/**
+ * Handles creating a calendar event for the stashed file
+ * @param {string} fileUrl - URL to stash
+ * @param {string} eventDateTime - ISO date string for the event
+ * @param {string} eventName - Name for the calendar event
+ * @returns {Promise} - Calendar event result
+ */
 async function handleStashFile(fileUrl, eventDateTime, eventName) {
   try {
     // Ensure we have a valid token
-    console.log('Getting auth token...');
     accessToken = await getAuthToken();
-    console.log('Token received');
     
-    let finalEventName = eventName;
-
     // Create calendar event
-    console.log('Creating calendar event...');
     const event = await createCalendarEvent({
-      summary: finalEventName,
+      summary: eventName,
       description: `Review webpage: ${fileUrl}`,
       startDateTime: eventDateTime,
       duration: 30 // minutes
@@ -52,11 +54,14 @@ async function handleStashFile(fileUrl, eventDateTime, eventName) {
   }
 }
 
+/**
+ * Gets an OAuth token for Google Calendar API
+ * @returns {Promise<string>} - Token string
+ */
 async function getAuthToken() {
   return new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError) {
-        console.error('Auth token error:', chrome.runtime.lastError);
         reject(new Error(chrome.runtime.lastError.message));
       } else {
         resolve(token);
@@ -65,6 +70,11 @@ async function getAuthToken() {
   });
 }
 
+/**
+ * Creates a calendar event
+ * @param {Object} eventDetails - Event details
+ * @returns {Promise<Object>} - Created event
+ */
 async function createCalendarEvent({ summary, description, startDateTime, duration }) {
   try {
     const endDateTime = new Date(new Date(startDateTime).getTime() + duration * 60000).toISOString();
@@ -80,7 +90,6 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
         dateTime: endDateTime,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
       },
-      // Add reminders
       reminders: {
         useDefault: false,
         overrides: [
@@ -88,8 +97,6 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
         ]
       }
     };
-    
-    console.log('Creating calendar event with data:', event);
     
     const response = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -105,9 +112,8 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Calendar API error:', errorData);
       
-      // More user-friendly error messages
+      // User-friendly error messages
       let errorMessage = 'Failed to create calendar event';
       
       if (errorData.error) {
@@ -123,15 +129,20 @@ async function createCalendarEvent({ summary, description, startDateTime, durati
       throw new Error(errorMessage);
     }
     
-    const result = await response.json();
-    console.log('Calendar event created:', result);
-    return result;
+    return await response.json();
   } catch (error) {
     console.error('Error in createCalendarEvent:', error);
     throw error;
   }
 }
 
+/**
+ * Shows a notification for the created event
+ * @param {string} title - Notification title
+ * @param {string} message - Notification message
+ * @param {string} eventId - Calendar event ID
+ * @param {string} eventUrl - Calendar event URL
+ */
 function showNotification(title, message, eventId, eventUrl) {
   chrome.notifications.create(
     eventId, // Use eventId as notification ID for reference
@@ -154,21 +165,22 @@ function showNotification(title, message, eventId, eventUrl) {
 // Handle notification clicks
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
   if (buttonIndex === 0) { // "Open Event" button
-    chrome.storage.local.get(notificationId, (result) => {
-      const eventUrl = result[notificationId];
-      if (eventUrl) {
-        chrome.tabs.create({ url: eventUrl });
-      }
-    });
+    openStoredEventUrl(notificationId);
   }
 });
 
 // Handle direct notification clicks
-chrome.notifications.onClicked.addListener((notificationId) => {
+chrome.notifications.onClicked.addListener(openStoredEventUrl);
+
+/**
+ * Opens the event URL stored for a notification ID
+ * @param {string} notificationId - Notification ID
+ */
+function openStoredEventUrl(notificationId) {
   chrome.storage.local.get(notificationId, (result) => {
     const eventUrl = result[notificationId];
     if (eventUrl) {
       chrome.tabs.create({ url: eventUrl });
     }
   });
-});
+}
