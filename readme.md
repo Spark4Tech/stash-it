@@ -6,11 +6,10 @@ Stash It is a Chrome extension that helps you save web pages to your Google Cale
 
 ## Features
 
-- Save the current tab as a calendar event with just a few clicks
+- Save the current tab as a calendar event with just two clicks
 - Schedule when you want to revisit the content
 - Customizable event names and times
-- Save default reminder times for quick scheduling
-- Receive notifications when events are created
+- Receive notification when event is created
 - Directly open calendar events from notifications
 
 ## Installation
@@ -89,7 +88,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built by [Spark4](https://spark4.tech)
-- Icon designed by Steve
+- Icon designed by Steve on Canva
 
 ## Privacy
 
