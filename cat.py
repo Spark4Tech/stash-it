@@ -42,7 +42,7 @@ def create_directory_tree(startpath):
     return '\n'.join(tree)
 
 def concatenate_files(file_list, output_file):
-    tree = create_directory_tree('.')  # Adjust '.' to the root of your project if necessary
+    tree = create_directory_tree('.') 
     with open(output_file, 'w') as outfile:
         outfile.write("# Project Directory Structure\n")
         outfile.write(tree + "\n\n# End of Directory Structure\n\n")

@@ -1,4 +1,5 @@
-// Handle OAuth token management
+// background.js
+
 let accessToken = null;
 
 // Listen for messages from popup or content script
